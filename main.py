@@ -1,9 +1,9 @@
 import threading
-import queue
 import time
+from collections import deque
 
 commonList=set()
-q=queue.Queue()
+q=deque()
 
 def worker():
     """
@@ -13,13 +13,14 @@ def worker():
     global commonList
     
     while True:
-        item = q.get()
-        if item is None:            
+        try:
+            item = q.popleft()
+        except IndexError as ie:
+            #print(ie)
             time.sleep(0.1) #Ctrl+Cで終了させるおまじない。
             break
         
         commonList.add((item.ID,sum(item.values)))
-        q.task_done()
 
 def main():
     global q
@@ -40,8 +41,19 @@ def main():
     print (f'Set test data elapsed_time:{format(set_data_time)} [sec]')
 
     """
+    Queueへテストデータを詰める
+    """
+    queueing_start = time.time()
+    [q.append(item) for item in threadItem]
+
+    queueing_time = time.time() - queueing_start
+    print (f'Queueing elapsed_time:{format(queueing_time)} [sec]')
+
+
+    """
     スレッドを立てる
     """
+    process_start = time.time()
     threads=set()
     thread_start = time.time()
     for i in range(num_worker_threads):
@@ -51,27 +63,23 @@ def main():
     
     thread_start_elapsed_time = time.time() - thread_start
     print (f'Thread start elapsed_time:{format(thread_start_elapsed_time)} [sec]')    
-
-    """
-    Queueへテストデータを詰める(Workerにて順次処理している)
-    """
-    process_start = time.time()
-    queueing_start = time.time()
-    [q.put(item) for item in threadItem]
-
-    queueing_time = time.time() - queueing_start
-    print (f'Queueing elapsed_time:{format(queueing_time)} [sec]')
     
     """
     Queueが空になるまで待機する
     """
-    q.join()
+    while True:
+        #print(len(q)) ちゃんとさばいてるか確認用
+        if len(q) == 0:
+            break;
+        else:
+            time.sleep(0.1)
+
     process_time = time.time() - process_start
     print (f'Process all data elapsed_time:{format(process_time)} [sec]')
 
     #スレッド停止命令(None)の投入
     for i in range(num_worker_threads):
-        q.put(None)
+        q.append(None)
     
     #スレッドの終了まち
     for t in threads:
