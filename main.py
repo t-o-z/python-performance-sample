@@ -25,16 +25,15 @@ def main():
     global q
     global commonList
     num_worker_threads = 5
-    test_data_num = 100000
+    test_data_num = 5000000
     print(f'Data set: {test_data_num}')
 
     """
     テストデータをセットする
     """
-    threadItem = []
     set_data_start = time.time()
-    for i in range(test_data_num):
-        threadItem.append(Job([1,2,3],0))
+    threadItem = set()
+    threadItem = [Job([1,2,3],0) for i in range(1, test_data_num)]
 
     set_data_time = time.time() - set_data_start
     print (f'Set test data elapsed_time:{format(set_data_time)} [sec]')
