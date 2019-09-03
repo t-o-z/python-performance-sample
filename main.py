@@ -13,11 +13,11 @@ def worker():
     global commonList
     
     while True:
-        time.sleep(0.1) #Ctrl+Cで終了させるおまじない。
-
         item = q.get()
         if item is None:            
+            time.sleep(0.1) #Ctrl+Cで終了させるおまじない。
             break
+        
         commonList.append((item.ID,sum(item.values)))
         q.task_done()
 
@@ -25,7 +25,7 @@ def main():
     global q
     global commonList
     num_worker_threads = 5
-    test_data_num = 1000
+    test_data_num = 100000
     print(f'Data set: {test_data_num}')
 
     """
