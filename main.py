@@ -2,7 +2,7 @@ import threading
 import queue
 import time
 
-commonList=[]
+commonList=set()
 q=queue.Queue()
 
 def worker():
@@ -18,22 +18,23 @@ def worker():
             time.sleep(0.1) #Ctrl+Cで終了させるおまじない。
             break
         
-        commonList.append((item.ID,sum(item.values)))
+        commonList.add((item.ID,sum(item.values)))
         q.task_done()
 
 def main():
     global q
     global commonList
-    num_worker_threads = 5
+    num_worker_threads = 10
     test_data_num = 5000000
     print(f'Data set: {test_data_num}')
+    print(f'Worker thread: {num_worker_threads}')
 
     """
     テストデータをセットする
     """
     set_data_start = time.time()
     threadItem = set()
-    threadItem = [Job([1,2,3],0) for i in range(1, test_data_num)]
+    threadItem = [Job([1,2,3],0) for i in range(test_data_num)]
 
     set_data_time = time.time() - set_data_start
     print (f'Set test data elapsed_time:{format(set_data_time)} [sec]')
@@ -41,12 +42,12 @@ def main():
     """
     スレッドを立てる
     """
-    threads=[]
+    threads=set()
     thread_start = time.time()
     for i in range(num_worker_threads):
         t = threading.Thread(target=worker)
         t.start()
-        threads.append(t)
+        threads.add(t)
     
     thread_start_elapsed_time = time.time() - thread_start
     print (f'Thread start elapsed_time:{format(thread_start_elapsed_time)} [sec]')    
@@ -56,17 +57,17 @@ def main():
     """
     process_start = time.time()
     queueing_start = time.time()
-    for item in threadItem:
-        q.put(item)
+    [q.put(item) for item in threadItem]
+
     queueing_time = time.time() - queueing_start
-    print (f'Queueing elapsed_time:{format(queueing_time)} [sec]')    
+    print (f'Queueing elapsed_time:{format(queueing_time)} [sec]')
     
     """
     Queueが空になるまで待機する
     """
     q.join()
     process_time = time.time() - process_start
-    print (f'Process all data elapsed_time:{format(process_time)} [sec]')    
+    print (f'Process all data elapsed_time:{format(process_time)} [sec]')
 
     #スレッド停止命令(None)の投入
     for i in range(num_worker_threads):
